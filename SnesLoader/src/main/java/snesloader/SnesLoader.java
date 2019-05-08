@@ -107,6 +107,24 @@ public class SnesLoader extends AbstractProgramLoader {
 			DomainFolder programFolder, LoadSpec loadSpec, List<Option> options, MessageLog log,
 			Object consumer, TaskMonitor monitor)
 			throws IOException, CancelledException {
+		Collection<RomInfo> detectedRomKinds = detectRomKind(provider);
+		if (detectedRomKinds.size() == 0) {
+			// Weird but ok.
+			throw new IOException("not a valid SNES ROM (has the file changed since starting the import?)");
+		}
+		if (detectedRomKinds.size() > 1) {
+			String errSummary = "Can't uniquely determine what kind of SNES ROM this is.";
+			StringBuilder sb = new StringBuilder(errSummary);
+			sb.append(" Could be any of:");
+			sb.append(System.lineSeparator());
+			for (RomInfo rom : detectedRomKinds) {
+				sb.append(rom.getDescription());
+				sb.append(System.lineSeparator());
+			}
+			log.appendMsg(sb.toString());
+			throw new IOException(errSummary);
+		}
+
 		// TODO: load from provider into a new program.
 		throw new IOException("snes loadProgram() not implemented yet");
 	}

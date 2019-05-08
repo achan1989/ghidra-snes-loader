@@ -64,6 +64,11 @@ public class RomInfo {
 		return getStartOffset() + kind.getSnesHeaderOffset();
 	}
 
+	public String getDescription() {
+		return kind.toString() +
+			(hasSmcHeader ? " with SMC header" : "");
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
