@@ -29,12 +29,10 @@ public class RomInfo {
 
 	private RomKind kind;
 	private boolean hasSmcHeader;
-	private long startOffset;
 
 	public RomInfo(RomKind kind, boolean hasSmcHeader) {
 		this.kind = kind;
 		this.hasSmcHeader = hasSmcHeader;
-		this.startOffset = hasSmcHeader ? SMC_HEADER_LEN : 0;
 	}
 
 	public boolean bytesLookValid(ByteProvider provider) {
@@ -59,10 +57,33 @@ public class RomInfo {
 	}
 
 	public long getStartOffset() {
-		return startOffset;
+		return (hasSmcHeader ? SMC_HEADER_LEN : 0);
 	}
 
 	public long getSnesHeaderOffset() {
-		return startOffset + kind.getSnesHeaderOffset();
+		return getStartOffset() + kind.getSnesHeaderOffset();
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (hasSmcHeader ? 1231 : 1237);
+		result = prime * result + ((kind == null) ? 0 : kind.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		RomInfo other = (RomInfo) obj;
+		if (hasSmcHeader != other.hasSmcHeader)
+			return false;
+		if (kind != other.kind)
+			return false;
+		return true;
 	}
 }
