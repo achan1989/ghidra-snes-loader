@@ -21,6 +21,7 @@ import ghidra.program.model.lang.ProcessorNotFoundException;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import snesloader.RomInfo.RomKind;
 
 /**
  * TODO: Provide class-level documentation that describes what this loader does.
@@ -29,9 +30,6 @@ public class SnesLoader extends AbstractProgramLoader {
 
 	public static final String APPLY_SNES_LABELS_OPTION_NAME = "Apply SNES-specific Labels";
 	public static final String ANCHOR_SNES_LABELS_OPTION_NAME = "Anchor SNES-specific Labels";
-	public static final int SMC_HEADER_LEN = 512;
-	public static final int SNES_HEADER_OFFSET_LOROM = 0x7FC0;
-	public static final int SNES_HEADER_OFFSET_HIROM = 0xFFC0;
 	public static final Integer SIXTEEN_BIT = 16;
 
 	@Override
@@ -66,26 +64,8 @@ public class SnesLoader extends AbstractProgramLoader {
 			return loadSpecs;
 		}
 
-		boolean foundValidHeader = false;
-		long[] headerLocations = new long[] {
-			SNES_HEADER_OFFSET_LOROM,
-			SNES_HEADER_OFFSET_HIROM,
-			SMC_HEADER_LEN + SNES_HEADER_OFFSET_LOROM,
-			SMC_HEADER_LEN + SNES_HEADER_OFFSET_HIROM};
-
-		for (long location : headerLocations) {
-			try {
-				SnesHeader header = SnesHeader.fromProviderAtOffset(provider, location);
-				if (header.looksValid()) {
-					foundValidHeader = true;
-					break;
-				}
-			} catch (IOException e) {
-				continue;
-			}
-		}
-
-		if (foundValidHeader) {
+		Collection<RomInfo> detectedRomKinds = detectRomKind(provider);
+		if (!detectedRomKinds.isEmpty()) {
 			LanguageCompilerSpecQuery query = new LanguageCompilerSpecQuery(
 				snesProcessor, Endian.LITTLE, SIXTEEN_BIT, null, null);
 			List<LanguageCompilerSpecPair> lcsps =
@@ -96,6 +76,23 @@ public class SnesLoader extends AbstractProgramLoader {
 		}
 
 		return loadSpecs;
+	}
+
+	private Collection<RomInfo> detectRomKind(ByteProvider provider) {
+		Collection<RomInfo> validRomKinds = new HashSet<RomInfo>();
+		RomInfo[] candidateRomKinds = new RomInfo[] {
+			new RomInfo(RomKind.LO_ROM, true),
+			new RomInfo(RomKind.LO_ROM, false),
+			new RomInfo(RomKind.HI_ROM, true),
+			new RomInfo(RomKind.HI_ROM, false)};
+
+		for (RomInfo rom : candidateRomKinds) {
+			if (rom.bytesLookValid(provider)) {
+				validRomKinds.add(rom);
+			}
+		}
+
+		return validRomKinds;
 	}
 
 	@Override

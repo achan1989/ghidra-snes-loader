@@ -24,7 +24,8 @@ public final class SnesHeader {
 	}
 
 	public static SnesHeader fromProviderAtOffset(ByteProvider provider, long offset) throws IOException {
-		assert offset >= 0;
+		if (offset < 0) { throw new IllegalArgumentException("offset cannot be negative"); }
+
 		ByteBuffer header_bytes = ByteBuffer.wrap(provider.readBytes(offset, SNES_HEADER_LEN));
 		header_bytes.order(ByteOrder.LITTLE_ENDIAN);
 
