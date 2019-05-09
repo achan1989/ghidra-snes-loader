@@ -19,6 +19,7 @@ import ghidra.program.model.lang.LanguageCompilerSpecQuery;
 import ghidra.program.model.lang.Processor;
 import ghidra.program.model.lang.ProcessorNotFoundException;
 import ghidra.program.model.listing.Program;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import snesloader.RomInfo.RomKind;
@@ -107,10 +108,11 @@ public class SnesLoader extends AbstractProgramLoader {
 			DomainFolder programFolder, LoadSpec loadSpec, List<Option> options, MessageLog log,
 			Object consumer, TaskMonitor monitor)
 			throws IOException, CancelledException {
+		List<Program> programs = new ArrayList<Program>();
 		Collection<RomInfo> detectedRomKinds = detectRomKind(provider);
 		if (detectedRomKinds.size() == 0) {
 			// Weird but ok.
-			throw new IOException("not a valid SNES ROM (has the file changed since starting the import?)");
+			throw new IOException("Not a valid SNES ROM (has the file changed since starting the import?)");
 		}
 		if (detectedRomKinds.size() > 1) {
 			String errSummary = "Can't uniquely determine what kind of SNES ROM this is.";
@@ -121,8 +123,8 @@ public class SnesLoader extends AbstractProgramLoader {
 				sb.append(rom.getDescription());
 				sb.append(System.lineSeparator());
 			}
-			log.appendMsg(sb.toString());
-			throw new IOException(errSummary);
+			Msg.showError(this, null, "Can't load ROM", sb.toString());
+			return programs;
 		}
 
 		// TODO: load from provider into a new program.
