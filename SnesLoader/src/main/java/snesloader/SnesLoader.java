@@ -13,7 +13,9 @@ import ghidra.app.util.opinion.Loader;
 import ghidra.app.util.opinion.LoaderTier;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Endian;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.LanguageCompilerSpecPair;
 import ghidra.program.model.lang.LanguageCompilerSpecQuery;
 import ghidra.program.model.lang.Processor;
@@ -126,9 +128,42 @@ public class SnesLoader extends AbstractProgramLoader {
 			Msg.showError(this, null, "Can't load ROM", sb.toString());
 			return programs;
 		}
+		if (!loadSpec.isComplete()) {
+			Msg.debug(this, "loadSpec is not complete.");
+			return programs;
+		}
 
-		// TODO: load from provider into a new program.
-		throw new IOException("snes loadProgram() not implemented yet");
+		LanguageCompilerSpecPair pair = loadSpec.getLanguageCompilerSpec();
+		Language importerLanguage = getLanguageService().getLanguage(pair.languageID);
+		CompilerSpec importerCompilerSpec =
+			importerLanguage.getCompilerSpecByID(pair.compilerSpecID);
+
+		Program prog = createProgram(provider, programName, null, getName(),
+			importerLanguage, importerCompilerSpec, consumer);
+
+		RomInfo romInfo = detectedRomKinds.iterator().next();
+		boolean success = loadWithTransaction(provider, loadSpec, options, log, prog, monitor, romInfo);
+		if (success) {
+			programs.add(prog);
+		}
+
+		return programs;
+	}
+
+	private boolean loadWithTransaction(ByteProvider provider, LoadSpec loadSpec,
+			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor, RomInfo romInfo) {
+		prog.setEventsEnabled(false);
+		int transactionID = prog.startTransaction("Loading - " + getName());
+		RomLoader loader = romInfo.getLoader();
+		boolean success = false;
+		try {
+			success = loader.load(provider, loadSpec, options, log, prog, monitor, romInfo);
+			return success;
+		}
+		finally {
+			prog.endTransaction(transactionID, success);
+			prog.setEventsEnabled(true);
+		}
 	}
 
 	@Override

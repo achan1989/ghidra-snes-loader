@@ -13,17 +13,23 @@ public class RomInfo {
 	public static final int MINIMUM_ROM_CHUNK_SIZE = 0x8000;
 
 	public enum RomKind {
-		LO_ROM(SNES_HEADER_OFFSET_LOROM),
-		HI_ROM(SNES_HEADER_OFFSET_HIROM);
+		LO_ROM(SNES_HEADER_OFFSET_LOROM, LoRomLoader::load),
+		HI_ROM(SNES_HEADER_OFFSET_HIROM, HiRomLoader::load);
 
 		private final long snesHeaderOffset;
+		private final RomLoader loader;
 
-		RomKind(long snesHeaderOffset) {
+		RomKind(long snesHeaderOffset, RomLoader loader) {
 			this.snesHeaderOffset = snesHeaderOffset;
+			this.loader = loader;
 		}
 
 		private long getSnesHeaderOffset() {
 			return snesHeaderOffset;
+		}
+
+		private RomLoader getLoader() {
+			return loader;
 		}
 	}
 
@@ -67,6 +73,10 @@ public class RomInfo {
 	public String getDescription() {
 		return kind.toString() +
 			(hasSmcHeader ? " with SMC header" : "");
+	}
+
+	public RomLoader getLoader() {
+		return kind.getLoader();
 	}
 
 	@Override
