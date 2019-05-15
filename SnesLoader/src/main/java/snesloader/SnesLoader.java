@@ -151,7 +151,8 @@ public class SnesLoader extends AbstractProgramLoader {
 	}
 
 	private boolean loadWithTransaction(ByteProvider provider, LoadSpec loadSpec,
-			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor, RomInfo romInfo) {
+			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor, RomInfo romInfo)
+			throws IOException {
 		prog.setEventsEnabled(false);
 		int transactionID = prog.startTransaction("Loading - " + getName());
 		RomLoader loader = romInfo.getLoader();
