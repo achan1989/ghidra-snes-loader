@@ -7,29 +7,31 @@ import ghidra.app.util.bin.ByteProvider;
 public class RomInfo {
 
 	public static final int SMC_HEADER_LEN = 512;
-	public static final int SNES_HEADER_OFFSET_LOROM = 0x7FC0;
-	public static final int SNES_HEADER_OFFSET_HIROM = 0xFFC0;
-	// ROM is mapped in multiples of this chunk size. 
-	public static final int MINIMUM_ROM_CHUNK_SIZE = 0x8000;
 
 	public enum RomKind {
-		LO_ROM(SNES_HEADER_OFFSET_LOROM, LoRomLoader::load),
-		HI_ROM(SNES_HEADER_OFFSET_HIROM, HiRomLoader::load);
+		LO_ROM(new LoRomLoader()),
+		HI_ROM(new HiRomLoader());
 
-		private final long snesHeaderOffset;
-		private final RomLoader loader;
+		private final RomInfoProvider infoProvider;
 
-		RomKind(long snesHeaderOffset, RomLoader loader) {
-			this.snesHeaderOffset = snesHeaderOffset;
-			this.loader = loader;
+		RomKind(RomInfoProvider infoProvider) {
+			this.infoProvider = infoProvider;
 		}
 
 		private long getSnesHeaderOffset() {
-			return snesHeaderOffset;
+			return infoProvider.getSnesHeaderOffset();
+		}
+
+		private long getMaxRomSize() {
+			return infoProvider.getMaxRomSize();
+		}
+
+		private long getRomChunkSize() {
+			return infoProvider.getChunkSize();
 		}
 
 		private RomLoader getLoader() {
-			return loader;
+			return infoProvider.getLoaderFunction();
 		}
 	}
 
@@ -44,12 +46,17 @@ public class RomInfo {
 	public boolean bytesLookValid(ByteProvider provider) {
 		boolean looksValid = true;
 		try {
-			long bytesLen = provider.length() - getStartOffset();
-			if (bytesLen < MINIMUM_ROM_CHUNK_SIZE) {
+			long romLen = provider.length() - getStartOffset();
+			// Must contain at least one chunk.
+			if (romLen < getRomChunkSize()) {
 				looksValid = false;
 			}
 			// ROM dumps should be a multiple of this chunk size (SMC header excepted). 
-			if (bytesLen % MINIMUM_ROM_CHUNK_SIZE != 0) {
+			if (romLen % getRomChunkSize() != 0) {
+				looksValid = false;
+			}
+			// Too big to load.
+			if (romLen > kind.getMaxRomSize()) {
 				looksValid = false;
 			}
 
@@ -68,6 +75,10 @@ public class RomInfo {
 
 	public long getSnesHeaderOffset() {
 		return getStartOffset() + kind.getSnesHeaderOffset();
+	}
+
+	public long getRomChunkSize() {
+		return kind.getRomChunkSize();
 	}
 
 	public String getDescription() {
