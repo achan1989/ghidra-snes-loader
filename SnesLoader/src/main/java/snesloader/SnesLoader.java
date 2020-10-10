@@ -5,7 +5,6 @@ import java.util.*;
 
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MemoryConflictHandler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.AbstractProgramLoader;
 import ghidra.app.util.opinion.LoadSpec;
@@ -100,8 +99,7 @@ public class SnesLoader extends AbstractProgramLoader {
 
 	@Override
 	protected boolean loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
-			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor,
-			MemoryConflictHandler handler) {
+			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor) {
 		return false;
 	}
 
@@ -182,8 +180,8 @@ public class SnesLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options) {
-		String error = super.validateOptions(provider, loadSpec, options);
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
+		String error = super.validateOptions(provider, loadSpec, options, program);
 		
 		if (error == null && options != null) {
 			for (Option option : options) {
