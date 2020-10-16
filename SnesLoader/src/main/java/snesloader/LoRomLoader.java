@@ -25,6 +25,16 @@ public class LoRomLoader implements RomInfoProvider {
 	public static boolean load(ByteProvider provider, LoadSpec loadSpec, List<Option> options, MessageLog log, Program prog,
 			TaskMonitor monitor, RomInfo romInfo)
 			throws IOException {
+		boolean success = loadRomChunks(provider, loadSpec, options, log, prog, monitor, romInfo);
+		success = success && mapWorkRam(options, prog);
+		success = success && mapPpu(options, prog);
+
+		return success;
+	}
+
+	private static boolean loadRomChunks(ByteProvider provider, LoadSpec loadSpec, List<Option> options, MessageLog log, Program prog,
+			TaskMonitor monitor, RomInfo romInfo)
+			throws IOException {
 		MemoryConflictHandler handler = MemoryConflictHandler.ALWAYS_OVERWRITE;
 		MemoryBlockUtil mbu = new MemoryBlockUtil(prog, handler);
 		AddressSpace busSpace = prog.getAddressFactory().getDefaultAddressSpace();
@@ -55,9 +65,35 @@ public class LoRomLoader implements RomInfoProvider {
 			}
 		}
 
-		// throw new UnsupportedOperationException("Loading a LO_ROM format is not implemented yet.");
+		return true;
+	}
+
+	private static boolean mapWorkRam(List<Option> options, Program prog) {
+		MemoryConflictHandler handler = MemoryConflictHandler.ALWAYS_OVERWRITE;
+		MemoryBlockUtil mbu = new MemoryBlockUtil(prog, handler);
+		AddressSpace busSpace = prog.getAddressFactory().getDefaultAddressSpace();
+
+		// Primary mapping.
+		Address wramMainStart = busSpace.getAddress(0x7e_0000);
+		mbu.createUninitializedBlock(false, "WRAM", wramMainStart, 0x2_0000, "work RAM", "", true, true, true);
+
+		// 7e:0000-1fff is mirrored at 00-3f:0000-1fff.
+		for (long bankStart = 0, i = 1; bankStart <= 0x3f_0000; bankStart += 0x1_0000, i++) {
+			Address wramMirrorStart = busSpace.getAddress(bankStart);
+			mbu.createMappedBlock(false, "WRAM_mirror"+i, wramMirrorStart, wramMainStart, 0x2000,
+				"mirror of WRAM", "", true, true, true);
+		}
 
 		return true;
+	}
+
+	private static boolean mapPpu(List<Option> options, Program prog) {
+		MemoryConflictHandler handler = MemoryConflictHandler.ALWAYS_OVERWRITE;
+		MemoryBlockUtil mbu = new MemoryBlockUtil(prog, handler);
+		AddressSpace busSpace = prog.getAddressFactory().getDefaultAddressSpace();
+
+		// Primary instance.
+		todo;
 	}
 
 	private static List<Address> getBusAddressesForRomChunk(RomChunk chunk, AddressSpace space) {
