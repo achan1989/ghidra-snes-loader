@@ -29,3 +29,8 @@ SnesLoader/.gradle
 SnesLoader/.project
 SnesLoader/.classpath
 SnesLoader/.settings
+
+# Files generated when building the extension.
+SnesLoader/bin
+SnesLoader/build
+SnesLoader/dist
