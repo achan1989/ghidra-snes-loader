@@ -1,0 +1,17 @@
+eclipse {
+  project {
+    name  = 'SnesLoader'
+  }
+
+  // Remove all libraries from the build path.
+  // Later on the user will have to link Eclipse with Ghidra in order to do
+  // anything useful. Linking adds the correct libraries, which would conflict
+  // with the libraries added by Gradle.
+  classpath {
+    file {
+      whenMerged { classpath ->
+        classpath.entries.removeAll { entry -> entry.kind == 'lib' }
+      }
+    }
+  }
+}
