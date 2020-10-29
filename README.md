@@ -1,5 +1,5 @@
 # ghidra-snes-loader
-Loader for SNES ROMs.
+Loader for SNES ROMs.  Works with Ghidra v9.1 or later only.
 
 ## To Build and Install
 
