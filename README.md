@@ -1,3 +1,7 @@
+**This repo is no longer maintained,** and I'm unlikely to come back to it in the future.
+
+-------
+
 # ghidra-snes-loader
 Loader for SNES ROMs.  Works with Ghidra v9.1 or later only.
 
